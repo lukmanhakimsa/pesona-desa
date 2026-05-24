@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pesona Desa Wisata Nusantara | Hidden Cultural Gems</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <div class="logo">Pesona Desa Wisata</div>
+            <ul class="nav-links">
+                <li><a href="#hero">Home</a></li>
+                <li><a href="#destinations">Destinations</a></li>
+                <li><a href="#weather">Weather</a></li>
+                <li><a href="#map">Location</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="hero" class="hero">
+            <div class="hero-overlay"></div>
+            <div class="hero-content container">
+                <h1>Discover the Hidden Soul of Indonesia</h1>
+                <p>Journey through the most authentic and untouched cultural villages of the archipelago.</p>
+                <a href="#destinations" class="btn">Explore Destinations</a>
+            </div>
+        </section>
+
+        <section id="destinations" class="destinations container">
+            <h2 class="section-title">Hidden Village Destinations</h2>
+            <div class="grid">
+                <!-- Desa Penglipuran -->
+                <div class="card">
+                    <div class="card-image" style="background-color: #2C4C3B;">
+                        <!-- Placeholder for image -->
+                        <span class="placeholder-text">Desa Penglipuran</span>
+                    </div>
+                    <div class="card-body">
+                        <h3>Desa Penglipuran, Bali</h3>
+                        <p class="description">World-renowned for its cleanliness and traditional bamboo architecture.</p>
+                        <div class="culture-info">
+                            <strong>Culture:</strong> Bamboo-based construction, Galungan festival celebrations.
+                            <br><strong>Culinary:</strong> Loloh Cemcem (traditional herbal drink).
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Desa Wae Rebo -->
+                <div class="card">
+                    <div class="card-image" style="background-color: #C05A3A;">
+                        <span class="placeholder-text">Desa Wae Rebo</span>
+                    </div>
+                    <div class="card-body">
+                        <h3>Desa Wae Rebo, Flores</h3>
+                        <p class="description">An isolated village in the clouds known for its iconic cone-shaped houses.</p>
+                        <div class="culture-info">
+                            <strong>Culture:</strong> Mbaru Niang houses, Penti harvest ceremony.
+                            <br><strong>Culinary:</strong> Authentic Wae Rebo highland coffee.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Desa Sade -->
+                <div class="card">
+                    <div class="card-image" style="background-color: #333333;">
+                        <span class="placeholder-text">Desa Sade</span>
+                    </div>
+                    <div class="card-body">
+                        <h3>Desa Sade, Lombok</h3>
+                        <p class="description">A village that preserves the ancient traditions of the Sasak tribe.</p>
+                        <div class="culture-info">
+                            <strong>Culture:</strong> Traditional Sasak dance, hand-woven Songket fabrics.
+                            <br><strong>Culinary:</strong> Ayam Taliwang and Plecing Kangkung.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="weather" class="weather-section container">
+            <h2 class="section-title">Live Weather Report</h2>
+            <div id="weather-widget" class="weather-card">
+                <div id="weather-loading">Loading weather data for Bali...</div>
+                <div id="weather-data" class="hidden">
+                    <div class="weather-main">
+                        <span id="weather-temp">--°C</span>
+                        <span id="weather-desc">Condition</span>
+                    </div>
+                    <div class="weather-details">
+                        <p>Humidity: <span id="weather-humidity">--%</span></p>
+                        <p>Location: Bali, Indonesia</p>
+                    </div>
+                </div>
+                <div id="weather-error" class="hidden">Unable to load weather data. Please check your API key.</div>
+            </div>
+        </section>
+
+        <section id="map" class="map-section container">
+            <h2 class="section-title">Our Location</h2>
+            <div class="map-container">
+                <iframe 
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d16300642.179344485!2d108.73024849641774!3d-2.443916942654366!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2c4c07d7496404b7%3A0xe37b4de71badf485!2sIndonesia!5e0!3m2!1sen!2sid!4v1716200000000!5m2!1sen!2sid" 
+                    width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Pesona Desa Wisata Nusantara. Preserving Culture, Connecting Souls.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
