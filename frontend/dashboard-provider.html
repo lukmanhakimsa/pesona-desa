@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Provider – Pesona Desa</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body { background-color: #f5f7f5; }
+    .navbar { background-color: #1a3a2a !important; }
+    .navbar-brand, .nav-link { color: #fff !important; }
+    .dest-img {
+      height: 160px;
+      object-fit: cover;
+      width: 100%;
+      border-radius: 8px 8px 0 0;
+    }
+    .dest-img-placeholder {
+      height: 160px;
+      background: linear-gradient(135deg, #2d6a4f, #52b788);
+      border-radius: 8px 8px 0 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 2rem;
+    }
+    #img-preview { max-height: 160px; object-fit: cover; border-radius: 8px; display: none; }
+    .badge-status-pending    { background:#ffc107; color:#212529; }
+    .badge-status-confirmed  { background:#198754; }
+    .badge-status-cancelled  { background:#dc3545; }
+    .badge-status-completed  { background:#0d6efd; }
+  </style>
+</head>
+<body>
+
+  <div id="toast-container" style="position:fixed; top:16px; right:16px; z-index:9999;"></div>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg px-4">
+    <span class="navbar-brand fw-bold">🏕️ Pesona Desa</span>
+    <div class="ms-auto d-flex align-items-center gap-3">
+      <span class="text-white-50 small" id="greeting">Halo, ...</span>
+      <button class="btn btn-outline-light btn-sm" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+  <!-- Tab Navigation -->
+  <div class="container mt-4">
+    <ul class="nav nav-tabs" id="mainTab">
+      <li class="nav-item">
+        <button class="nav-link active fw-semibold" data-tab="destinations" onclick="switchTab('destinations', this)">
+          🏕️ Destinasi Saya
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link fw-semibold" data-tab="bookings" onclick="switchTab('bookings', this)">
+          📋 Kelola Booking
+        </button>
+      </li>
+    </ul>
+
+    <!-- Tab: Destinasi -->
+    <div id="tab-destinations" class="tab-pane mt-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">Destinasi yang Kamu Kelola</h5>
+        <button class="btn btn-success fw-semibold" onclick="openAddModal()">
+          + Tambah Destinasi
+        </button>
+      </div>
+      <div id="dest-list" class="row g-3">
+        <div class="col-12 text-center py-5 text-muted">Memuat destinasi...</div>
+      </div>
+    </div>
+
+    <!-- Tab: Bookings -->
+    <div id="tab-bookings" class="tab-pane mt-4 d-none">
+      <h5 class="fw-bold mb-3">📋 Booking untuk Destinasi Kamu</h5>
+      <div id="booking-list">
+        <div class="text-center py-5 text-muted">Memuat booking...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Modal: Tambah / Edit Destinasi ─────────────────────────────── -->
+  <div class="modal fade" id="modal-dest" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold" id="modal-dest-title">Tambah Destinasi</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="dest-id" />
+
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">Nama Destinasi <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="dest-title" placeholder="Contoh: Desa Penglipuran, Bali" />
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Lokasi <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="dest-location" placeholder="Contoh: Bangli, Bali" />
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Deskripsi <span class="text-danger">*</span></label>
+              <textarea class="form-control" id="dest-desc" rows="3" placeholder="Ceritakan tentang destinasi ini..."></textarea>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Kebudayaan / Keunikan (opsional)</label>
+              <textarea class="form-control" id="dest-culture" rows="2" placeholder="Festival, tradisi, kerajinan, dll."></textarea>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Upload Gambar</label>
+              <input type="file" class="form-control" id="dest-image" accept="image/*" onchange="previewImage(this)" />
+              <img id="img-preview" class="mt-2 w-100" alt="Preview gambar" />
+              <small class="text-muted">Format: JPG, PNG, WEBP. Max 5MB.</small>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button class="btn btn-success fw-semibold" onclick="submitDestination()">Simpan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Modal: Update Status Booking ────────────────────────────────── -->
+  <div class="modal fade" id="modal-status" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h6 class="modal-title fw-bold">Update Status Booking</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="status-booking-id" />
+          <label class="form-label fw-semibold">Status Baru</label>
+          <select class="form-select" id="status-select">
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+          <button class="btn btn-success btn-sm fw-semibold" onclick="submitStatus()">Update</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    let currentUser = null;
+
+    // ─── Init ────────────────────────────────────────────────────────────
+    (function init() {
+      currentUser = requireAuth(["provider"]);
+      if (!currentUser) return;
+      document.getElementById("greeting").textContent = `Halo, ${currentUser.name} 👋`;
+      loadDestinations();
+    })();
+
+    // ─── Tab Switcher ────────────────────────────────────────────────────
+    function switchTab(tabName, btnEl) {
+      document.querySelectorAll(".tab-pane").forEach(p => p.classList.add("d-none"));
+      document.querySelectorAll(".nav-link[data-tab]").forEach(b => b.classList.remove("active"));
+      document.getElementById(`tab-${tabName}`).classList.remove("d-none");
+      btnEl.classList.add("active");
+      if (tabName === "bookings") loadBookings();
+    }
+
+    // ─── Load Destinasi (filter by provider_id) ──────────────────────────
+    async function loadDestinations() {
+      const el = document.getElementById("dest-list");
+      try {
+        const res = await apiFetch("/destinations");
+        const data = await res.json();
+
+        // Filter hanya destinasi milik provider ini
+        const myDests = (data.destinations || []).filter(
+          d => d.provider_id === currentUser.id
+        );
+
+        if (myDests.length === 0) {
+          el.innerHTML = '<div class="col-12 text-center py-5 text-muted">Kamu belum punya destinasi. Tambahkan sekarang!</div>';
+          return;
+        }
+
+        el.innerHTML = myDests.map(d => {
+          const imgHtml = d.image
+            ? `<img src="http://localhost:3000${d.image}" class="dest-img" alt="${d.title}" />`
+            : `<div class="dest-img-placeholder">🏕️</div>`;
+          return `
+            <div class="col-md-6 col-lg-4">
+              <div class="card h-100 shadow-sm">
+                ${imgHtml}
+                <div class="card-body">
+                  <h6 class="fw-bold">${d.title}</h6>
+                  <p class="text-muted small mb-1">📍 ${d.location}</p>
+                  <p class="small mb-3">${truncate(d.description, 90)}</p>
+                  <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary btn-sm flex-grow-1" onclick="openEditModal(${d.id})">
+                      ✏️ Edit
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm flex-grow-1" onclick="deleteDestination(${d.id}, '${escHtml(d.title)}')">
+                      🗑️ Hapus
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>`;
+        }).join("");
+      } catch (err) {
+        el.innerHTML = '<div class="col-12 text-center py-5 text-danger">Gagal memuat destinasi.</div>';
+      }
+    }
+
+    // ─── Modal Tambah ────────────────────────────────────────────────────
+    function openAddModal() {
+      document.getElementById("modal-dest-title").textContent = "Tambah Destinasi";
+      document.getElementById("dest-id").value = "";
+      document.getElementById("dest-title").value = "";
+      document.getElementById("dest-location").value = "";
+      document.getElementById("dest-desc").value = "";
+      document.getElementById("dest-culture").value = "";
+      document.getElementById("dest-image").value = "";
+      document.getElementById("img-preview").style.display = "none";
+      new bootstrap.Modal(document.getElementById("modal-dest")).show();
+    }
+
+    // ─── Modal Edit ──────────────────────────────────────────────────────
+    async function openEditModal(destId) {
+      try {
+        const res = await apiFetch(`/destinations/${destId}`);
+        const data = await res.json();
+        const d = data.destination;
+
+        document.getElementById("modal-dest-title").textContent = "Edit Destinasi";
+        document.getElementById("dest-id").value = d.id;
+        document.getElementById("dest-title").value = d.title;
+        document.getElementById("dest-location").value = d.location;
+        document.getElementById("dest-desc").value = d.description;
+        document.getElementById("dest-culture").value = d.culture || "";
+        document.getElementById("dest-image").value = "";
+
+        // Preview gambar yang sudah ada
+        const preview = document.getElementById("img-preview");
+        if (d.image) {
+          preview.src = `http://localhost:3000${d.image}`;
+          preview.style.display = "block";
+        } else {
+          preview.style.display = "none";
+        }
+
+        new bootstrap.Modal(document.getElementById("modal-dest")).show();
+      } catch (err) {
+        showToast("Gagal memuat data destinasi.", "danger");
+      }
+    }
+
+    // ─── Submit (Add/Edit) ────────────────────────────────────────────────
+    async function submitDestination() {
+      const id = document.getElementById("dest-id").value;
+      const title = document.getElementById("dest-title").value.trim();
+      const location = document.getElementById("dest-location").value.trim();
+      const description = document.getElementById("dest-desc").value.trim();
+      const culture = document.getElementById("dest-culture").value.trim();
+      const imageFile = document.getElementById("dest-image").files[0];
+
+      if (!title || !location || !description) {
+        showToast("Nama, lokasi, dan deskripsi wajib diisi!", "danger");
+        return;
+      }
+
+      // Pakai FormData karena ada file upload gambar
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("location", location);
+      formData.append("description", description);
+      if (culture) formData.append("culture", culture);
+      if (imageFile) formData.append("image", imageFile);
+
+      try {
+        const isEdit = !!id;
+        const res = await apiFetch(
+          isEdit ? `/destinations/${id}` : "/destinations",
+          { method: isEdit ? "PUT" : "POST", body: formData }
+        );
+        const data = await res.json();
+
+        if (!res.ok) {
+          showToast(data.message || "Gagal menyimpan.", "danger");
+          return;
+        }
+
+        bootstrap.Modal.getInstance(document.getElementById("modal-dest")).hide();
+        showToast(isEdit ? "Destinasi berhasil diupdate!" : "Destinasi berhasil ditambahkan!", "success");
+        loadDestinations();
+      } catch (err) {
+        showToast("Gagal konek ke server.", "danger");
+      }
+    }
+
+    // ─── Hapus Destinasi ─────────────────────────────────────────────────
+    async function deleteDestination(id, title) {
+      if (!confirm(`Yakin mau hapus destinasi "${title}"? Aksi ini tidak bisa dibatalkan.`)) return;
+
+      try {
+        const res = await apiFetch(`/destinations/${id}`, { method: "DELETE" });
+        const data = await res.json();
+
+        if (!res.ok) {
+          showToast(data.message || "Gagal menghapus.", "danger");
+          return;
+        }
+
+        showToast("Destinasi berhasil dihapus.", "success");
+        loadDestinations();
+      } catch (err) {
+        showToast("Gagal konek ke server.", "danger");
+      }
+    }
+
+    // ─── Load Bookings Provider ───────────────────────────────────────────
+    async function loadBookings() {
+      const el = document.getElementById("booking-list");
+      el.innerHTML = '<div class="text-center py-5 text-muted">Memuat...</div>';
+
+      try {
+        const res = await apiFetch("/bookings/provider");
+        const data = await res.json();
+        const bookings = data.bookings || [];
+
+        if (bookings.length === 0) {
+          el.innerHTML = '<div class="text-center py-5 text-muted">Belum ada booking untuk destinasimu.</div>';
+          return;
+        }
+
+        el.innerHTML = `
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead class="table-dark">
+                <tr>
+                  <th>#</th><th>Wisatawan</th><th>Destinasi</th>
+                  <th>Tanggal</th><th>Tamu</th><th>Status</th><th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${bookings.map((b, i) => `
+                  <tr>
+                    <td>${i + 1}</td>
+                    <td>
+                      <div class="fw-semibold">${b.tourist_name}</div>
+                      <small class="text-muted">${b.tourist_email}</small>
+                    </td>
+                    <td>${b.destination_title}</td>
+                    <td>${formatDate(b.visit_date)}</td>
+                    <td>${b.guest_count} orang</td>
+                    <td><span class="badge badge-status-${b.status}">${b.status}</span></td>
+                    <td>
+                      <button class="btn btn-outline-primary btn-sm" onclick="openStatusModal(${b.id}, '${b.status}')">
+                        Update
+                      </button>
+                    </td>
+                  </tr>`).join("")}
+              </tbody>
+            </table>
+          </div>`;
+      } catch (err) {
+        el.innerHTML = '<div class="text-center py-5 text-danger">Gagal memuat booking.</div>';
+      }
+    }
+
+    // ─── Update Status Booking ────────────────────────────────────────────
+    function openStatusModal(bookingId, currentStatus) {
+      document.getElementById("status-booking-id").value = bookingId;
+      document.getElementById("status-select").value = currentStatus;
+      new bootstrap.Modal(document.getElementById("modal-status")).show();
+    }
+
+    async function submitStatus() {
+      const id = document.getElementById("status-booking-id").value;
+      const status = document.getElementById("status-select").value;
+
+      try {
+        const res = await apiFetch(`/bookings/${id}/status`, {
+          method: "PATCH",
+          body: JSON.stringify({ status }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          showToast(data.message || "Gagal update status.", "danger");
+          return;
+        }
+
+        bootstrap.Modal.getInstance(document.getElementById("modal-status")).hide();
+        showToast(`Status booking diubah ke "${status}".`, "success");
+        loadBookings();
+      } catch (err) {
+        showToast("Gagal konek ke server.", "danger");
+      }
+    }
+
+    // ─── Preview Gambar ───────────────────────────────────────────────────
+    function previewImage(input) {
+      const preview = document.getElementById("img-preview");
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => {
+          preview.src = e.target.result;
+          preview.style.display = "block";
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    // ─── Helpers ──────────────────────────────────────────────────────────
+    function truncate(str, maxLen) {
+      if (!str) return "";
+      return str.length > maxLen ? str.substring(0, maxLen) + "..." : str;
+    }
+    function escHtml(str) {
+      return str.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+    }
+    function formatDate(dateStr) {
+      if (!dateStr) return "-";
+      return new Date(dateStr).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+    }
+  </script>
+</body>
+</html>

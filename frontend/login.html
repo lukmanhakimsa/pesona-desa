@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login – Pesona Desa</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body {
+      background: linear-gradient(135deg, #1a3a2a 0%, #2d6a4f 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-card {
+      width: 100%;
+      max-width: 420px;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    .brand-logo {
+      color: #2d6a4f;
+      font-weight: 700;
+      font-size: 1.4rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Toast container -->
+  <div id="toast-container" style="position:fixed; top:16px; right:16px; z-index:9999;"></div>
+
+  <div class="login-card card p-4 p-md-5">
+    <div class="text-center mb-4">
+      <div class="brand-logo mb-1">🏕️ Pesona Desa</div>
+      <h5 class="fw-semibold text-muted">Masuk ke Akun Kamu</h5>
+    </div>
+
+    <form id="login-form" novalidate>
+      <div class="mb-3">
+        <label for="email" class="form-label fw-semibold">Email</label>
+        <input
+          type="email"
+          class="form-control"
+          id="email"
+          placeholder="contoh@email.com"
+          required
+        />
+      </div>
+
+      <div class="mb-4">
+        <label for="password" class="form-label fw-semibold">Password</label>
+        <input
+          type="password"
+          class="form-control"
+          id="password"
+          placeholder="Masukkan password"
+          required
+        />
+      </div>
+
+      <button type="submit" id="btn-login" class="btn btn-success w-100 fw-semibold">
+        Login
+      </button>
+    </form>
+
+    <hr class="my-4" />
+    <p class="text-center text-muted mb-0">
+      Belum punya akun?
+      <a href="register.html" class="text-success fw-semibold">Daftar di sini</a>
+    </p>
+    <p class="text-center mt-2 mb-0">
+      <a href="index.html" class="text-secondary small">← Kembali ke Beranda</a>
+    </p>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    // Kalau sudah login, langsung redirect ke dashboard sesuai role
+    (function checkAlreadyLoggedIn() {
+      const token = getToken();
+      const user = getUser();
+      if (token && user) redirectToDashboard(user.role);
+    })();
+
+    function redirectToDashboard(role) {
+      if (role === "superadmin") window.location.href = "dashboard-admin.html";
+      else if (role === "provider") window.location.href = "dashboard-provider.html";
+      else window.location.href = "dashboard-tourist.html";
+    }
+
+    document.getElementById("login-form").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const btn = document.getElementById("btn-login");
+
+      if (!email || !password) {
+        showToast("Email dan password wajib diisi.", "danger");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Memproses...";
+
+      try {
+        const res = await fetch("http://localhost:3000/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          showToast(data.message || "Login gagal.", "danger");
+          return;
+        }
+
+        // Simpan token dan data user ke localStorage
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        showToast("Login berhasil! Mengalihkan...", "success");
+
+        // Redirect sesuai role
+        setTimeout(() => redirectToDashboard(data.user.role), 800);
+      } catch (err) {
+        showToast("Tidak bisa konek ke server. Pastikan backend sudah jalan.", "danger");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Login";
+      }
+    });
+  </script>
+</body>
+</html>
