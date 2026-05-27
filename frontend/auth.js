@@ -2,6 +2,10 @@
 // auth.js - Utility bersama untuk semua halaman
 // =============================================
 
+// Legacy cleanup: versi lokal sebelumnya pernah membaca localStorage.apiOrigin
+// sehingga browser bisa tetap mencoba http://localhost:3010 dari cache lama.
+localStorage.removeItem("apiOrigin");
+
 const API_ORIGIN = "";
 const API_BASE = `${API_ORIGIN}/api`;
 
