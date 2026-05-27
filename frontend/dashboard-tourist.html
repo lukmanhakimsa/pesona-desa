@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Wisatawan – Pesona Desa</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body { background-color: #f5f7f5; }
+    .navbar { background-color: #1a3a2a !important; }
+    .navbar-brand, .nav-link { color: #fff !important; }
+    .dest-img {
+      height: 180px;
+      object-fit: cover;
+      width: 100%;
+      border-radius: 8px 8px 0 0;
+      background: #c8ddd1;
+    }
+    .dest-img-placeholder {
+      height: 180px;
+      background: linear-gradient(135deg, #2d6a4f, #52b788);
+      border-radius: 8px 8px 0 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 2rem;
+    }
+    .badge-status-pending    { background: #ffc107; color:#212529; }
+    .badge-status-confirmed  { background: #198754; }
+    .badge-status-cancelled  { background: #dc3545; }
+    .badge-status-completed  { background: #0d6efd; }
+    .star { color: #f4a825; }
+  </style>
+</head>
+<body>
+
+  <div id="toast-container" style="position:fixed; top:16px; right:16px; z-index:9999;"></div>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg px-4">
+    <span class="navbar-brand fw-bold">🏕️ Pesona Desa</span>
+    <div class="ms-auto d-flex align-items-center gap-3">
+      <span class="text-white-50 small" id="greeting">Halo, ...</span>
+      <button class="btn btn-outline-light btn-sm" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+  <!-- Tab Navigation -->
+  <div class="container mt-4">
+    <ul class="nav nav-tabs" id="mainTab">
+      <li class="nav-item">
+        <button class="nav-link active fw-semibold" data-tab="destinations" onclick="switchTab('destinations', this)">
+          🗺️ Destinasi
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link fw-semibold" data-tab="bookings" onclick="switchTab('bookings', this)">
+          📅 Booking Saya
+        </button>
+      </li>
+    </ul>
+
+    <!-- Tab: Destinasi -->
+    <div id="tab-destinations" class="tab-pane mt-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">Semua Destinasi Wisata</h5>
+        <input
+          type="text"
+          class="form-control w-auto"
+          id="search-input"
+          placeholder="🔍 Cari destinasi..."
+          oninput="filterDestinations()"
+          style="min-width: 220px;"
+        />
+      </div>
+      <div id="dest-list" class="row g-3">
+        <div class="col-12 text-center py-5 text-muted">Memuat destinasi...</div>
+      </div>
+    </div>
+
+    <!-- Tab: Bookings -->
+    <div id="tab-bookings" class="tab-pane mt-4 d-none">
+      <h5 class="fw-bold mb-3">📅 Riwayat Booking Saya</h5>
+      <div id="booking-list">
+        <div class="text-center py-5 text-muted">Memuat booking...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Booking -->
+  <div class="modal fade" id="modal-booking" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">📅 Buat Booking</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted mb-3" id="booking-dest-name"></p>
+          <input type="hidden" id="booking-dest-id" />
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Tanggal Kunjungan</label>
+            <input type="date" class="form-control" id="booking-date" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Jumlah Tamu</label>
+            <input type="number" class="form-control" id="booking-guests" value="1" min="1" max="50" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Catatan (opsional)</label>
+            <textarea class="form-control" id="booking-notes" rows="2" placeholder="Permintaan khusus, dll."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button class="btn btn-success fw-semibold" onclick="submitBooking()">Konfirmasi Booking</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Review -->
+  <div class="modal fade" id="modal-review" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">⭐ Tulis Review</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted mb-3" id="review-dest-name"></p>
+          <input type="hidden" id="review-dest-id" />
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Rating</label>
+            <select class="form-select" id="review-rating">
+              <option value="5">⭐⭐⭐⭐⭐ – Luar biasa!</option>
+              <option value="4">⭐⭐⭐⭐ – Bagus</option>
+              <option value="3">⭐⭐⭐ – Cukup</option>
+              <option value="2">⭐⭐ – Kurang</option>
+              <option value="1">⭐ – Mengecewakan</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Komentar</label>
+            <textarea class="form-control" id="review-comment" rows="3" placeholder="Ceritakan pengalaman kamu..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button class="btn btn-warning fw-semibold" onclick="submitReview()">Kirim Review</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    let allDestinations = [];
+
+    // ─── Init ────────────────────────────────────────────────────────────
+    (function init() {
+      const user = requireAuth(["tourist"]);
+      if (!user) return;
+
+      document.getElementById("greeting").textContent = `Halo, ${user.name} 👋`;
+
+      // Set min date untuk booking
+      document.getElementById("booking-date").min = new Date().toISOString().split("T")[0];
+
+      loadDestinations();
+    })();
+
+    // ─── Tab Switcher ────────────────────────────────────────────────────
+    function switchTab(tabName, btnEl) {
+      document.querySelectorAll(".tab-pane").forEach(p => p.classList.add("d-none"));
+      document.querySelectorAll(".nav-link[data-tab]").forEach(b => b.classList.remove("active"));
+
+      document.getElementById(`tab-${tabName}`).classList.remove("d-none");
+      btnEl.classList.add("active");
+
+      if (tabName === "bookings") loadBookings();
+    }
+
+    // ─── Load Destinasi ──────────────────────────────────────────────────
+    async function loadDestinations() {
+      try {
+        const res = await apiFetch("/destinations");
+        const data = await res.json();
+        allDestinations = data.destinations || [];
+        renderDestinations(allDestinations);
+      } catch (err) {
+        document.getElementById("dest-list").innerHTML =
+          '<div class="col-12 text-center py-5 text-danger">Gagal memuat destinasi. Cek koneksi server.</div>';
+      }
+    }
+
+    function filterDestinations() {
+      const q = document.getElementById("search-input").value.toLowerCase();
+      const filtered = allDestinations.filter(
+        d =>
+          d.title.toLowerCase().includes(q) ||
+          d.location.toLowerCase().includes(q) ||
+          (d.culture || "").toLowerCase().includes(q)
+      );
+      renderDestinations(filtered);
+    }
+
+    function renderDestinations(list) {
+      const el = document.getElementById("dest-list");
+      if (list.length === 0) {
+        el.innerHTML = '<div class="col-12 text-center py-5 text-muted">Tidak ada destinasi ditemukan.</div>';
+        return;
+      }
+
+      el.innerHTML = list.map(d => {
+        const stars = renderStars(d.average_rating);
+        const imgHtml = d.image
+          ? `<img src="http://localhost:3000${d.image}" class="dest-img" alt="${d.title}" />`
+          : `<div class="dest-img-placeholder">🏕️</div>`;
+
+        return `
+          <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm">
+              ${imgHtml}
+              <div class="card-body">
+                <h6 class="fw-bold">${d.title}</h6>
+                <p class="text-muted small mb-1">📍 ${d.location}</p>
+                <p class="small mb-2">${truncate(d.description, 100)}</p>
+                ${d.culture ? `<p class="small text-muted mb-2">🎭 ${truncate(d.culture, 80)}</p>` : ""}
+                <div class="mb-2 small">${stars} <span class="text-muted">(${d.review_count || 0} ulasan)</span></div>
+                <p class="small text-muted mb-3">Oleh: ${d.provider_name}</p>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-success btn-sm flex-grow-1" onclick="openBookingModal(${d.id}, '${escHtml(d.title)}')">
+                    📅 Booking
+                  </button>
+                  <button class="btn btn-outline-warning btn-sm flex-grow-1" onclick="openReviewModal(${d.id}, '${escHtml(d.title)}')">
+                    ⭐ Review
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>`;
+      }).join("");
+    }
+
+    // ─── Booking ─────────────────────────────────────────────────────────
+    function openBookingModal(destId, destTitle) {
+      document.getElementById("booking-dest-id").value = destId;
+      document.getElementById("booking-dest-name").textContent = `Destinasi: ${destTitle}`;
+      document.getElementById("booking-notes").value = "";
+      document.getElementById("booking-guests").value = 1;
+      new bootstrap.Modal(document.getElementById("modal-booking")).show();
+    }
+
+    async function submitBooking() {
+      const destination_id = document.getElementById("booking-dest-id").value;
+      const visit_date = document.getElementById("booking-date").value;
+      const guest_count = document.getElementById("booking-guests").value;
+      const notes = document.getElementById("booking-notes").value.trim();
+
+      if (!visit_date) {
+        showToast("Pilih tanggal kunjungan dulu!", "danger");
+        return;
+      }
+
+      try {
+        const res = await apiFetch("/bookings", {
+          method: "POST",
+          body: JSON.stringify({ destination_id: Number(destination_id), visit_date, guest_count: Number(guest_count), notes }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          showToast(data.message || "Booking gagal.", "danger");
+          return;
+        }
+
+        bootstrap.Modal.getInstance(document.getElementById("modal-booking")).hide();
+        showToast("Booking berhasil! Status: pending.", "success");
+      } catch (err) {
+        showToast("Gagal konek ke server.", "danger");
+      }
+    }
+
+    // ─── Review ──────────────────────────────────────────────────────────
+    function openReviewModal(destId, destTitle) {
+      document.getElementById("review-dest-id").value = destId;
+      document.getElementById("review-dest-name").textContent = `Destinasi: ${destTitle}`;
+      document.getElementById("review-comment").value = "";
+      document.getElementById("review-rating").value = "5";
+      new bootstrap.Modal(document.getElementById("modal-review")).show();
+    }
+
+    async function submitReview() {
+      const destination_id = document.getElementById("review-dest-id").value;
+      const rating = document.getElementById("review-rating").value;
+      const comment = document.getElementById("review-comment").value.trim();
+
+      if (!comment) {
+        showToast("Tulis komentar dulu!", "danger");
+        return;
+      }
+
+      try {
+        const res = await apiFetch("/reviews", {
+          method: "POST",
+          body: JSON.stringify({ destination_id: Number(destination_id), rating: Number(rating), comment }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          showToast(data.message || "Review gagal disimpan.", "danger");
+          return;
+        }
+
+        bootstrap.Modal.getInstance(document.getElementById("modal-review")).hide();
+        showToast("Review berhasil dikirim!", "success");
+        loadDestinations(); // refresh rating
+      } catch (err) {
+        showToast("Gagal konek ke server.", "danger");
+      }
+    }
+
+    // ─── Load Bookings ────────────────────────────────────────────────────
+    async function loadBookings() {
+      const el = document.getElementById("booking-list");
+      el.innerHTML = '<div class="text-center py-5 text-muted">Memuat...</div>';
+
+      try {
+        const res = await apiFetch("/bookings/mine");
+        const data = await res.json();
+        const bookings = data.bookings || [];
+
+        if (bookings.length === 0) {
+          el.innerHTML = '<div class="text-center py-5 text-muted">Belum ada booking.</div>';
+          return;
+        }
+
+        el.innerHTML = `
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead class="table-dark">
+                <tr>
+                  <th>#</th>
+                  <th>Destinasi</th>
+                  <th>Lokasi</th>
+                  <th>Tanggal</th>
+                  <th>Tamu</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${bookings.map((b, i) => `
+                  <tr>
+                    <td>${i + 1}</td>
+                    <td class="fw-semibold">${b.destination_title}</td>
+                    <td class="text-muted small">📍 ${b.location}</td>
+                    <td>${formatDate(b.visit_date)}</td>
+                    <td>${b.guest_count} orang</td>
+                    <td><span class="badge badge-status-${b.status}">${b.status}</span></td>
+                  </tr>`).join("")}
+              </tbody>
+            </table>
+          </div>`;
+      } catch (err) {
+        el.innerHTML = '<div class="text-center py-5 text-danger">Gagal memuat booking.</div>';
+      }
+    }
+
+    // ─── Helper ───────────────────────────────────────────────────────────
+    function truncate(str, maxLen) {
+      if (!str) return "";
+      return str.length > maxLen ? str.substring(0, maxLen) + "..." : str;
+    }
+
+    function escHtml(str) {
+      return str.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+    }
+
+    function renderStars(avg) {
+      if (!avg) return '<span class="text-muted small">Belum ada rating</span>';
+      const full = Math.round(avg);
+      return "★".repeat(full) + "☆".repeat(5 - full) + ` <strong>${avg}</strong>`;
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return "-";
+      return new Date(dateStr).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+    }
+  </script>
+</body>
+</html>
