@@ -31,15 +31,15 @@ END$$
 
 DELIMITER ;
 
-CALL add_column_if_missing('users', 'approved', 'BOOLEAN NOT NULL DEFAULT TRUE');
+CALL add_column_if_missing('users', 'approved', 'BOOLEAN NOT NULL DEFAULT FALSE');
 CALL add_column_if_missing('users', 'created_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
 
 DROP PROCEDURE add_column_if_missing;
 
-UPDATE users SET approved = TRUE WHERE approved IS NULL OR approved = FALSE;
+UPDATE users SET approved = TRUE WHERE role IN ('tourist', 'superadmin') AND approved = FALSE;
 
 ALTER TABLE users
-  MODIFY COLUMN approved BOOLEAN NOT NULL DEFAULT TRUE,
+  MODIFY COLUMN approved BOOLEAN NOT NULL DEFAULT FALSE,
   MODIFY COLUMN role ENUM('superadmin', 'provider', 'tourist') NOT NULL DEFAULT 'tourist';
 
 CREATE TABLE IF NOT EXISTS destinations (

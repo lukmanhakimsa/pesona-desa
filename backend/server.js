@@ -7,6 +7,7 @@ const authRoutes = require("./routes/authRoutes");
 const destinationRoutes = require("./routes/destinationRoutes");
 const bookingRoutes = require("./routes/bookingRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 
 require("./db");
 
@@ -21,11 +22,12 @@ app.use("/api/auth", authRoutes);
 app.use("/api/destinations", destinationRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.get("/", (req, res) => {
   res.json({
     message: "Backend Pesona Desa jalan",
-    endpoints: ["/api/auth", "/api/destinations", "/api/bookings", "/api/reviews"]
+    endpoints: ["/api/auth", "/api/destinations", "/api/bookings", "/api/reviews", "/api/admin"]
   });
 });
 

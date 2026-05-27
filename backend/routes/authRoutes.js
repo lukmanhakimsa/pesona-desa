@@ -31,18 +31,22 @@ router.post("/register", async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    const approved = role === "tourist";
     const sql =
       "INSERT INTO users (name, email, password, role, approved) VALUES (?, ?, ?, ?, ?)";
 
-    const [result] = await db.query(sql, [name, email, hashedPassword, role, true]);
+    const [result] = await db.query(sql, [name, email, hashedPassword, role, approved]);
 
     res.status(201).json({
-      message: "User registered",
+      message: role === "provider"
+        ? "Registrasi provider berhasil. Akun provider menunggu approval admin"
+        : "User registered",
       user: {
         id: result.insertId,
         name,
         email,
-        role
+        role,
+        approved
       }
     });
   } catch (error) {
@@ -72,8 +76,14 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ message: "Email atau password salah" });
     }
 
+    if (user.role === "provider" && !user.approved) {
+      return res.status(403).json({
+        message: "Akun provider menunggu approval admin"
+      });
+    }
+
     if (!user.approved) {
-      return res.status(403).json({ message: "Akun belum disetujui" });
+      return res.status(403).json({ message: "Akun belum disetujui admin" });
     }
 
     const token = jwt.sign(

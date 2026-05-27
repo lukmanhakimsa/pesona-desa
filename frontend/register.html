@@ -111,7 +111,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="js/auth.js"></script>
+  <script src="auth.js"></script>
   <script>
     document.getElementById("register-form").addEventListener("submit", async function (e) {
       e.preventDefault();
@@ -136,7 +136,7 @@
       btn.textContent = "Mendaftar...";
 
       try {
-        const res = await fetch("http://localhost:3000/api/auth/register", {
+        const res = await fetch(`${API_BASE}/auth/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name, email, password, role }),
@@ -149,7 +149,7 @@
           return;
         }
 
-        showToast("Registrasi berhasil! Silakan login.", "success");
+        showToast(data.message || "Registrasi berhasil! Silakan login.", "success");
         setTimeout(() => (window.location.href = "login.html"), 1200);
       } catch (err) {
         showToast("Tidak bisa konek ke server. Pastikan backend sudah jalan.", "danger");

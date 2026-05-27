@@ -2,7 +2,12 @@
 // auth.js - Utility bersama untuk semua halaman
 // =============================================
 
-const API_BASE = "http://localhost:3000/api";
+const API_ORIGIN = localStorage.getItem("apiOrigin") || "http://localhost:3010";
+const API_BASE = `${API_ORIGIN}/api`;
+
+function assetUrl(path) {
+  return path ? `${API_ORIGIN}${path}` : "";
+}
 
 // Ambil token dari localStorage
 function getToken() {

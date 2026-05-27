@@ -76,7 +76,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="js/auth.js"></script>
+  <script src="auth.js"></script>
   <script>
     // Kalau sudah login, langsung redirect ke dashboard sesuai role
     (function checkAlreadyLoggedIn() {
@@ -107,7 +107,7 @@
       btn.textContent = "Memproses...";
 
       try {
-        const res = await fetch("http://localhost:3000/api/auth/login", {
+        const res = await fetch(`${API_BASE}/auth/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
