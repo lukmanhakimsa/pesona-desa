@@ -1,9 +1,14 @@
-version: '3.9'
-
 services:
   backend:
     build: .
     container_name: pesona-backend
+    env_file:
+      - ./backend/.env
+    environment:
+      DB_HOST: host.docker.internal
+      PORT: 3000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "3010:3000"
     restart: always
