@@ -5,9 +5,12 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      DB_HOST: 127.0.0.1
-      PORT: 3010
-    network_mode: host
+      DB_HOST: host.docker.internal
+      PORT: 3000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "3010:3000"
     restart: always
     volumes:
       - ./backend/uploads:/app/uploads
