@@ -182,8 +182,9 @@
         const data = await res.json();
 
         // Filter hanya destinasi milik provider ini
+        const currentUserId = Number(currentUser.id);
         const myDests = (data.destinations || []).filter(
-          d => d.provider_id === currentUser.id
+          d => Number(d.provider_id) === currentUserId
         );
 
         if (myDests.length === 0) {
@@ -300,7 +301,7 @@
 
         bootstrap.Modal.getInstance(document.getElementById("modal-dest")).hide();
         showToast(isEdit ? "Destinasi berhasil diupdate!" : "Destinasi berhasil ditambahkan!", "success");
-        loadDestinations();
+        await loadDestinations();
       } catch (err) {
         showToast("Gagal konek ke server.", "danger");
       }

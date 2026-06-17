@@ -90,7 +90,7 @@ router.post(
         });
       }
 
-      const providerId = req.user.role === "provider" ? req.user.id : req.body.provider_id || req.user.id;
+      const providerId = Number(req.user.role === "provider" ? req.user.id : req.body.provider_id || req.user.id);
 
       const [result] = await db.query(
         `
@@ -139,7 +139,7 @@ router.put(
       }
 
       const destination = destinations[0];
-      if (req.user.role === "provider" && destination.provider_id !== req.user.id) {
+      if (req.user.role === "provider" && Number(destination.provider_id) !== Number(req.user.id)) {
         return res.status(403).json({ message: "Provider hanya boleh mengubah destinasi sendiri" });
       }
 
@@ -187,7 +187,7 @@ router.delete(
         return res.status(404).json({ message: "Destinasi tidak ditemukan" });
       }
 
-      if (req.user.role === "provider" && destinations[0].provider_id !== req.user.id) {
+      if (req.user.role === "provider" && Number(destinations[0].provider_id) !== Number(req.user.id)) {
         return res.status(403).json({ message: "Provider hanya boleh menghapus destinasi sendiri" });
       }
 
