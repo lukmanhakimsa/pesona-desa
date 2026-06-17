@@ -26,10 +26,11 @@ router.get("/destination/:destinationId", async (req, res) => {
 
 router.post("/", authenticateToken, authorizeRoles("tourist"), async (req, res) => {
   const { destination_id, rating, comment } = req.body;
+  const destinationId = Number(destination_id);
   const numericRating = Number(rating);
 
   try {
-    if (!destination_id || !numericRating || !comment) {
+    if (!destinationId || !numericRating || !comment) {
       return res.status(400).json({ message: "destination_id, rating, dan comment wajib diisi" });
     }
 
@@ -37,12 +38,28 @@ router.post("/", authenticateToken, authorizeRoles("tourist"), async (req, res) 
       return res.status(400).json({ message: "Rating harus bernilai 1 sampai 5" });
     }
 
-    const [destinations] = await db.query("SELECT id FROM destinations WHERE id = ?", [
-      destination_id
-    ]);
+    const [destinations] = await db.query("SELECT id FROM destinations WHERE id = ?", [destinationId]);
 
     if (destinations.length === 0) {
       return res.status(404).json({ message: "Destinasi tidak ditemukan" });
+    }
+
+    const [completedBookings] = await db.query(
+      `
+      SELECT id
+      FROM bookings
+      WHERE user_id = ?
+        AND destination_id = ?
+        AND status = 'completed'
+      LIMIT 1
+      `,
+      [req.user.id, destinationId]
+    );
+
+    if (completedBookings.length === 0) {
+      return res.status(403).json({
+        message: "Review hanya bisa ditulis setelah booking destinasi ini selesai"
+      });
     }
 
     const [result] = await db.query(
@@ -51,7 +68,7 @@ router.post("/", authenticateToken, authorizeRoles("tourist"), async (req, res) 
       VALUES (?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE rating = VALUES(rating), comment = VALUES(comment)
       `,
-      [req.user.id, destination_id, numericRating, comment]
+      [req.user.id, destinationId, numericRating, comment]
     );
 
     res.status(201).json({
@@ -59,7 +76,7 @@ router.post("/", authenticateToken, authorizeRoles("tourist"), async (req, res) 
       review: {
         id: result.insertId,
         user_id: req.user.id,
-        destination_id,
+        destination_id: destinationId,
         rating: numericRating,
         comment
       }
@@ -80,7 +97,7 @@ router.delete("/:id", authenticateToken, async (req, res) => {
       return res.status(404).json({ message: "Review tidak ditemukan" });
     }
 
-    const ownsReview = reviews[0].user_id === req.user.id;
+    const ownsReview = Number(reviews[0].user_id) === Number(req.user.id);
     if (!ownsReview && req.user.role !== "superadmin") {
       return res.status(403).json({ message: "Tidak boleh menghapus review ini" });
     }

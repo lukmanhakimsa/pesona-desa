@@ -146,7 +146,7 @@ router.patch(
         return res.status(404).json({ message: "Booking tidak ditemukan" });
       }
 
-      if (req.user.role === "provider" && bookings[0].provider_id !== req.user.id) {
+      if (req.user.role === "provider" && Number(bookings[0].provider_id) !== Number(req.user.id)) {
         return res.status(403).json({ message: "Provider hanya boleh mengubah booking destinasi sendiri" });
       }
 
